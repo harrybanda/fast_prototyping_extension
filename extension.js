@@ -11,7 +11,7 @@ function generateCode(data) {
   const htmlContent = object.generated_webpage_html;
   const cssContent = object.generated_webpage_css;
 
-  var finalPath = folderPath.replace("/c%3A", "");
+  var finalPath = folderPath.replace("/c%3A", ""); // temprary fix
   fs.writeFile(path.join(finalPath, "index.html"), htmlContent, (err) => {
     if (err) return vscode.window.showErrorMessage("Failed to create files");
     fs.writeFile(path.join(finalPath, "index.css"), cssContent, (err) => {
@@ -34,6 +34,11 @@ function createWebview(context) {
       switch (message.command) {
         case "import":
           generateCode(message.data);
+          return;
+        case "open":
+          vscode.env.openExternal(
+            vscode.Uri.parse("file:///C:/Users/Harry/Desktop/Test/index.html") // Temporary path
+          );
           return;
       }
     },
@@ -76,14 +81,25 @@ function view() {
           width: 300px;
           font-family: Tahoma, Geneva, sans-serif;
         }
-        .container input[type="text"] {
+        #codeInput {
           width: 100%;
           padding: 15px;
           border: 1px solid #dddddd;
           margin-bottom: 15px;
           box-sizing: border-box;
         }
-        .container button[type="button"] {
+        #btnImport {
+          width: 100%;
+          padding: 15px;
+          background-color: #23bb2a;
+          border: 0;
+          box-sizing: border-box;
+          cursor: pointer;
+          font-weight: bold;
+          color: #ffffff;
+          margin-bottom: 15px;
+        }
+        #btnOpen {
           width: 100%;
           padding: 15px;
           background-color: #209cee;
@@ -92,6 +108,7 @@ function view() {
           cursor: pointer;
           font-weight: bold;
           color: #ffffff;
+          margin-bottom: 15px;
         }
       </style>
     </head>
@@ -105,11 +122,14 @@ function view() {
           required
         />
         <span id="loading"></span>
-        <button type="button" onclick="importCode()">Import Code</button>
+        <button id="btnImport" type="button" onclick="importCode()">
+          Import Code
+        </button>
+        <span id="loaded"></span>
       </div>
       <script>
         const vscode = acquireVsCodeApi();
-  
+
         var HttpClient = function () {
           this.get = function (aUrl, aCallback) {
             var anHttpRequest = new XMLHttpRequest();
@@ -121,9 +141,9 @@ function view() {
             anHttpRequest.send(null);
           };
         };
-  
+
         var client = new HttpClient();
-  
+
         function importCode() {
           var code = document.getElementById("codeInput").value;
           document.getElementById("loading").innerHTML = "<p>Loading...</p>";
@@ -132,6 +152,8 @@ function view() {
               code,
             function (response) {
               document.getElementById("loading").innerHTML = "";
+              document.getElementById("loaded").innerHTML =
+                "<button id='btnOpen' type='button' onclick='openPage()'>Open Page</button>";
               vscode.postMessage({
                 command: "import",
                 data: response,
@@ -139,8 +161,13 @@ function view() {
             }
           );
         }
+        function openPage() {
+          vscode.postMessage({
+            command: "open",
+          });
+        }
       </script>
     </body>
-  </html>  
+  </html>
 `;
 }
